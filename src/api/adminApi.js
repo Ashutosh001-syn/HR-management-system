@@ -1,4 +1,4 @@
-import apiClient from "@/api/apiClient";
+import apiClient, { apiRootClient } from "@/api/apiClient";
 import { createMultipartFormData } from "@/utils/helpers";
 
 function asMultipartBody(payload, extra = {}) {
@@ -63,8 +63,24 @@ export async function updateLeaveStatus({ leave_id, user_id, action }) {
   return response.data;
 }
 
+function createAttendancePayload(params = {}) {
+  const normalizedStatus = typeof params?.status === "string" ? params.status.trim() : "";
+  const payload = { ...params };
+
+  if (!normalizedStatus || normalizedStatus === "All") {
+    delete payload.status;
+    return payload;
+  }
+
+  return {
+    ...payload,
+    status: normalizedStatus,
+    attendance_status: normalizedStatus,
+  };
+}
+
 export async function getAttendanceByStatus(params = {}) {
-  const response = await apiClient.post("/get_attendance_ByStatus", createMultipartFormData(params), {
+  const response = await apiClient.post("/get_attendance_ByStatus", createMultipartFormData(createAttendancePayload(params)), {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
@@ -72,5 +88,18 @@ export async function getAttendanceByStatus(params = {}) {
 
 export async function getDashboardDetail() {
   const response = await apiClient.get("/get_dashboard_detail");
+  return response.data;
+}
+
+export async function addNetwork({ name, status }) {
+  const response = await apiRootClient.post("/admin/add-network", {
+    name,
+    status,
+  });
+  return response.data;
+}
+
+export async function getNetworks(params = {}) {
+  const response = await apiRootClient.get("/users/networks", { params });
   return response.data;
 }

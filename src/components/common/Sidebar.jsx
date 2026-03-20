@@ -1,6 +1,7 @@
-import Logo from "@/assets/Inmortallogo.png";
+import CollapsedLogo from "@/assets/Inmortal 1.png";
+import FullLogo from "@/assets/Inmortallogo.png";
 import "./Sidebar.css";
-import { SIDEBAR_WIDTH } from "@/utils/helpers";
+import { SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_WIDTH } from "@/utils/helpers";
 import {
   FiActivity,
   FiBell,
@@ -32,18 +33,18 @@ function isActivePath(pathname, item) {
   return pathname.startsWith(item.to);
 }
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed = false }) {
   const location = useLocation();
   const navigate = useNavigate();
 
   return (
     <aside
-      className="dashboard-sidebar d-flex flex-column"
+      className={`dashboard-sidebar d-flex flex-column ${collapsed ? "is-collapsed" : ""}`}
       style={{
         position: "fixed",
         top: 0,
         left: 0,
-        width: SIDEBAR_WIDTH,
+        width: collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH,
         height: "100vh",
         overflowY: "auto",
         zIndex: 1030,
@@ -53,13 +54,13 @@ export default function Sidebar() {
       <div className="dashboard-sidebar__glow dashboard-sidebar__glow--bottom" />
 
       <div className="dashboard-sidebar__brand">
-        <div className="dashboard-sidebar__chip">HR Workspace</div>
+        {/* <div className="dashboard-sidebar__chip">HR Workspace</div> */}
         <img
-          src={Logo}
+          src={collapsed ? CollapsedLogo : FullLogo}
           alt="Company logo"
           className="dashboard-sidebar__logo"
         />
-        <p className="dashboard-sidebar__subtitle">Smart navigation for attendance, wifi, notices, and people ops.</p>
+        {/* <p className="dashboard-sidebar__subtitle">Smart navigation for attendance, wifi, notices, and people ops.</p> */}
       </div>
 
       <div className="dashboard-sidebar__divider" />
@@ -75,6 +76,8 @@ export default function Sidebar() {
               type="button"
               className={`dashboard-sidebar__link ${active ? "is-active" : ""}`}
               onClick={() => navigate(item.to)}
+              aria-label={item.label}
+              title={item.label}
             >
               <span className="dashboard-sidebar__icon">
                 <Icon size={18} />

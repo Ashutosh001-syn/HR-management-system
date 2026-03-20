@@ -11,6 +11,7 @@
     linear-gradient(180deg, #16324f 0%, #1b4568 48%, #205072 100%);
   color: var(--sidebar-text);
   overflow: hidden;
+  transition: width 180ms ease, padding 180ms ease;
 }
 
 .dashboard-sidebar__glow {
@@ -43,6 +44,9 @@
 
 .dashboard-sidebar__brand {
   padding: 0.45rem 0.3rem 0.85rem;
+  display: flex;
+  justify-content: center;
+  transition: opacity 140ms ease, transform 140ms ease;
 }
 
 .dashboard-sidebar__chip {
@@ -61,6 +65,7 @@
   width: 154px;
   object-fit: contain;
   display: block;
+  transition: width 180ms ease, height 180ms ease;
 }
 
 .dashboard-sidebar__subtitle {
@@ -74,6 +79,7 @@
   height: 1px;
   margin: 0.35rem 0 1rem;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.04));
+  transition: opacity 140ms ease;
 }
 
 .dashboard-sidebar__nav {
@@ -128,4 +134,43 @@
 .dashboard-sidebar__label {
   font-weight: 600;
   line-height: 1.25;
+  white-space: nowrap;
+}
+
+.dashboard-sidebar.is-collapsed {
+  padding-inline: 0.65rem;
+}
+
+.dashboard-sidebar.is-collapsed .dashboard-sidebar__brand {
+  padding: 0.25rem 0 0.8rem;
+  opacity: 1;
+  transform: none;
+}
+
+.dashboard-sidebar.is-collapsed .dashboard-sidebar__logo {
+  width: 52px;
+  height: 52px;
+}
+
+.dashboard-sidebar.is-collapsed .dashboard-sidebar__divider {
+  opacity: 0;
+  pointer-events: none;
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.dashboard-sidebar.is-collapsed .dashboard-sidebar__nav {
+  align-items: center;
+}
+
+.dashboard-sidebar.is-collapsed .dashboard-sidebar__link {
+  width: auto;
+  min-width: 56px;
+  justify-content: center;
+  padding-inline: 0.75rem;
+}
+
+.dashboard-sidebar.is-collapsed .dashboard-sidebar__label {
+  display: none;
 }

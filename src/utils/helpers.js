@@ -1,4 +1,5 @@
 export const SIDEBAR_WIDTH = 280;
+export const SIDEBAR_COLLAPSED_WIDTH = 96;
 export const TOPBAR_HEIGHT = 56;
 export const EMPTY_VALUE = "-";
 export const RELATION_OPTIONS = [
@@ -77,6 +78,18 @@ export function normalizeAttendanceStatus(status) {
   if (lower === "absent") return "Absent";
   if (lower === "late" || lower === "l") return "Late";
   if (["halfday", "half_day", "half day", "hd"].includes(lower)) return "Half Day";
+
+  return String(status).charAt(0).toUpperCase() + String(status).slice(1).toLowerCase();
+}
+
+export function normalizeWifiStatus(status) {
+  if (!status) return "Unknown";
+
+  const lower = String(status).toLowerCase().trim();
+  if (lower === "active") return "Active";
+  if (lower === "inactive") return "Inactive";
+  if (lower === "enabled") return "Active";
+  if (lower === "disabled") return "Inactive";
 
   return String(status).charAt(0).toUpperCase() + String(status).slice(1).toLowerCase();
 }
@@ -176,6 +189,15 @@ export function normalizeAttendanceRecord(record, index = 0) {
     punch_out: formatTime(punchOut),
     total_hours: formatTime(totalHours),
     reason: record?.reason || record?.absent_reason || "",
+    raw: record,
+  };
+}
+
+export function normalizeWifiRecord(record, index = 0) {
+  return {
+    network_id: record?.network_id ?? record?.networkId ?? record?.id ?? record?.insertId ?? `WIFI-${index + 1}`,
+    name: record?.name ?? record?.network_name ?? record?.networkName ?? record?.ssid ?? EMPTY_VALUE,
+    status: normalizeWifiStatus(record?.status ?? record?.network_status ?? record?.networkStatus),
     raw: record,
   };
 }

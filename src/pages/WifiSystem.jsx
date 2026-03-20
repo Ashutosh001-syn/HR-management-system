@@ -1,42 +1,56 @@
+import { addNetwork, getNetworks } from "@/api/adminApi";
+import Error from "@/components/common/Error";
+import Loader from "@/components/common/Loader";
+import { normalizeWifiRecord } from "@/utils/helpers";
 import { useEffect, useState } from "react";
-
-const STORAGE_KEY = "wifi-system-records";
-const LEGACY_STORAGE_KEY = "attendance-system-records";
 
 const INITIAL_FORM = {
   name: "",
-  status: "Active",
+  status: "active",
 };
 
 function getBadgeClass(status) {
   return status === "Active" ? "bg-success" : "bg-secondary";
 }
 
+function getNetworkList(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.networks)) return payload.networks;
+  if (Array.isArray(payload?.records)) return payload.records;
+  if (Array.isArray(payload?.result)) return payload.result;
+  return [];
+}
+
 export default function WifiSystem() {
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [records, setRecords] = useState([]);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [fetchError, setFetchError] = useState("");
+  const [formError, setFormError] = useState("");
   const [message, setMessage] = useState("");
+  const [refreshSeed, setRefreshSeed] = useState(0);
 
   useEffect(() => {
-    try {
-      const savedRecords = localStorage.getItem(STORAGE_KEY);
-      const legacyRecords = localStorage.getItem(LEGACY_STORAGE_KEY);
-      const sourceRecords = savedRecords || legacyRecords;
-      if (!sourceRecords) return;
+    const fetchNetworks = async () => {
+      setLoading(true);
+      setFetchError("");
 
-      const parsedRecords = JSON.parse(sourceRecords);
-      if (Array.isArray(parsedRecords)) {
-        setRecords(parsedRecords);
+      try {
+        const response = await getNetworks();
+        const normalizedRecords = getNetworkList(response).map((record, index) => normalizeWifiRecord(record, index));
+        setRecords(normalizedRecords);
+      } catch (err) {
+        setFetchError(err.message || "Failed to fetch wifi records.");
+        setRecords([]);
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      setRecords([]);
-    }
-  }, []);
+    };
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-  }, [records]);
+    fetchNetworks();
+  }, [refreshSeed]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -46,54 +60,34 @@ export default function WifiSystem() {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const trimmedName = formData.name.trim();
     if (!trimmedName) {
-      setError("Name is required.");
+      setFormError("Name is required.");
       setMessage("");
       return;
     }
 
-    const normalizedName = trimmedName.toLowerCase();
-    const existingRecord = records.find((record) => record.name.trim().toLowerCase() === normalizedName);
+    setSubmitting(true);
+    setFormError("");
+    setMessage("");
 
-    if (existingRecord) {
-      if (existingRecord.status !== formData.status) {
-        setRecords((current) => current.map((record) => {
-          if (record.name.trim().toLowerCase() !== normalizedName) {
-            return record;
-          }
+    try {
+      const response = await addNetwork({
+        name: trimmedName,
+        status: formData.status,
+      });
 
-          return {
-            ...record,
-            status: formData.status,
-          };
-        }));
-        setFormData(INITIAL_FORM);
-        setError("");
-        setMessage(`Wifi status for "${trimmedName}" was updated to ${formData.status}.`);
-        return;
-      }
-
-      setRecords((current) => current.filter((record) => record.name.trim().toLowerCase() !== normalizedName));
       setFormData(INITIAL_FORM);
-      setError("");
-      setMessage(`Matching wifi record for "${trimmedName}" was removed.`);
-      return;
+      setMessage(response?.message || `Wifi record for "${trimmedName}" was added.`);
+      setRefreshSeed((current) => current + 1);
+    } catch (err) {
+      setFormError(err.message || "Failed to add wifi record.");
+    } finally {
+      setSubmitting(false);
     }
-
-    const newRecord = {
-      id: Date.now(),
-      name: trimmedName,
-      status: formData.status,
-    };
-
-    setRecords((current) => [newRecord, ...current]);
-    setFormData(INITIAL_FORM);
-    setError("");
-    setMessage(`Wifi record for "${trimmedName}" was added.`);
   };
 
   return (
@@ -106,6 +100,16 @@ export default function WifiSystem() {
           <div className="admin-page__meta">
             <span>{records.length} wifi records</span>
           </div>
+        </div>
+        <div className="admin-page__actions">
+          <button
+            type="button"
+            className="btn btn-light"
+            onClick={() => setRefreshSeed((current) => current + 1)}
+            disabled={loading}
+          >
+            Refresh
+          </button>
         </div>
       </section>
 
@@ -142,16 +146,16 @@ export default function WifiSystem() {
                   value={formData.status}
                   onChange={handleChange}
                 >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
                 </select>
               </div>
 
-              {error && <div className="alert alert-danger py-2">{error}</div>}
-              {!error && message && <div className="alert alert-success py-2">{message}</div>}
+              {formError && <div className="alert alert-danger py-2">{formError}</div>}
+              {!formError && message && <div className="alert alert-success py-2">{message}</div>}
 
-              <button type="submit" className="btn btn-success w-100">
-                Submit
+              <button type="submit" className="btn btn-success w-100" disabled={submitting}>
+                {submitting ? "Submitting..." : "Submit"}
               </button>
             </form>
           </div>
@@ -167,9 +171,14 @@ export default function WifiSystem() {
               <span className="admin-count-badge">{records.length} Records</span>
             </div>
 
-            {records.length === 0 ? (
+            {loading && <Loader label="Loading wifi records..." />}
+            {!loading && fetchError && <Error message={fetchError} />}
+
+            {!loading && !fetchError && records.length === 0 ? (
               <div className="admin-empty-state">No wifi data submitted yet.</div>
-            ) : (
+            ) : null}
+
+            {!loading && !fetchError && records.length > 0 ? (
               <div className="table-responsive">
                 <table className="table admin-table align-middle mb-0">
                   <thead>
@@ -181,7 +190,7 @@ export default function WifiSystem() {
                   </thead>
                   <tbody>
                     {records.map((record, index) => (
-                      <tr key={record.id}>
+                      <tr key={`${record.network_id}-${index}`}>
                         <td>{index + 1}</td>
                         <td>{record.name}</td>
                         <td>
@@ -192,7 +201,7 @@ export default function WifiSystem() {
                   </tbody>
                 </table>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

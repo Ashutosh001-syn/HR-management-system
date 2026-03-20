@@ -326,6 +326,28 @@
   letter-spacing: 0.08em;
 }
 
+.admin-topbar__toggle {
+  border: 0;
+  padding: 0;
+  color: #64748b;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: transparent;
+}
+
+.admin-topbar__toggle:hover {
+  color: #16324f;
+}
+
+.admin-topbar__toggle:focus-visible {
+  color: #16324f;
+  outline: 2px solid rgba(42, 111, 219, 0.18);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
 .admin-topbar__logout {
   border: 0;
   border-radius: 999px;

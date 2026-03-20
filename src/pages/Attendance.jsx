@@ -41,7 +41,9 @@ export default function Attendance() {
       setError("");
 
       try {
-        const response = await getAttendanceByStatus({});
+        const response = await getAttendanceByStatus({
+          status: selectedStatus,
+        });
         const normalizedRecords = getAttendanceList(response).map((record, index) => normalizeAttendanceRecord(record, index));
         setRecords(normalizedRecords);
       } catch (err) {
@@ -53,7 +55,7 @@ export default function Attendance() {
     };
 
     fetchAttendance();
-  }, [refreshSeed]);
+  }, [refreshSeed, selectedStatus]);
 
   const statusFilteredRecords = useMemo(() => {
     if (selectedStatus === "All") {
