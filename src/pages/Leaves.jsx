@@ -81,7 +81,7 @@ export default function Leaves() {
 
     setConfirmation({
       show: true,
-      message: `${newStatus} leave ${leave.leave_id} for user ${leave.user_id}?`,
+      message: `Leave request for ${leave.first_name} ${leave.last_name} has been ${newStatus}.`,
       onConfirm: async () => {
         try {
           await updateLeaveStatus({

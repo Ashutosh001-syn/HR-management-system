@@ -53,6 +53,51 @@ export function formatTime(value) {
   return typeof value === "string" ? value.trim() || EMPTY_VALUE : String(value);
 }
 
+export function calculateTotalHours(punchIn, punchOut) {
+  if (!punchIn || !punchOut) return "0:00";
+
+  try {
+    // Helper to extract HH:MM from string (HH:MM or ISO datetime)
+    const extractTime = (timeStr) => {
+      if (!timeStr) return null;
+      const str = timeStr.toString().trim();
+      // Try HH:MM first
+      let match = str.match(/(\d{1,2}):(\d{2})/);
+      if (match) {
+        const hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+        return { hours, minutes };
+      }
+      // Try ISO datetime (e.g., 2024-01-01T09:30:00)
+      match = str.match(/T(\d{2}):(\d{2}):/);
+      if (match) {
+        const hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+        return { hours, minutes };
+      }
+      return null;
+    };
+
+    const inTime = extractTime(punchIn);
+    const outTime = extractTime(punchOut);
+
+    if (!inTime || !outTime) return "0:00";
+
+    const inMinutes = inTime.hours * 60 + inTime.minutes;
+    const outMinutes = outTime.hours * 60 + outTime.minutes;
+
+    let totalMinutes = outMinutes - inMinutes;
+    if (totalMinutes < 0) totalMinutes = 0;
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    return `${hours}:${minutes.toString().padStart(2, "0")}`;
+  } catch {
+    return "0:00";
+  }
+}
+
 export function getEmployeeName(employee) {
   return [employee?.first_name, employee?.last_name].filter(Boolean).join(" ").trim()
     || employee?.name
@@ -174,9 +219,8 @@ export function normalizeLeaveRecord(record, index = 0) {
 
 export function normalizeAttendanceRecord(record, index = 0) {
   const loginDate = record?.login_date ?? record?.attendanceDate ?? record?.date ?? record?.created_at ?? null;
-  const punchIn = record?.punch_in ?? record?.punchIn ?? record?.check_in ?? record?.checkIn ?? record?.start_time ?? record?.startTime ?? record?.start ?? null;
-  const punchOut = record?.punch_out ?? record?.punchOut ?? record?.check_out ?? record?.checkOut ?? record?.end_time ?? record?.endTime ?? record?.end ?? null;
-  const totalHours = record?.totalHours ?? record?.total_hours ?? record?.working_hours ?? record?.duration ?? record?.total_work_hours ?? null;
+  const punchInRaw = record?.punch_in ?? record?.punchIn ?? record?.check_in ?? record?.checkIn ?? record?.start_time ?? record?.startTime ?? record?.start ?? null;
+  const punchOutRaw = record?.punch_out ?? record?.punchOut ?? record?.check_out ?? record?.checkOut ?? record?.end_time ?? record?.endTime ?? record?.end ?? null;
 
   return {
     attendance_id: record?.attendance_id ?? record?.id ?? `ATT-${index + 1}`,
@@ -185,9 +229,9 @@ export function normalizeAttendanceRecord(record, index = 0) {
     last_name: record?.last_name ?? record?.lastName ?? record?.employeeLastName ?? "",
     status: normalizeAttendanceStatus(record?.status),
     login_date: loginDate,
-    punch_in: formatTime(punchIn),
-    punch_out: formatTime(punchOut),
-    total_hours: formatTime(totalHours),
+    punch_in: formatTime(punchInRaw),
+    punch_out: formatTime(punchOutRaw),
+    total_hours: calculateTotalHours(punchInRaw, punchOutRaw),
     reason: record?.reason || record?.absent_reason || "",
     raw: record,
   };

@@ -77,13 +77,28 @@ export default function Attendance() {
     });
   }, [statusFilteredRecords, searchText]);
 
-  const summary = useMemo(() => ({
-    total: statusFilteredRecords.length,
-    present: statusFilteredRecords.filter((item) => item.status === "Present").length,
-    late: statusFilteredRecords.filter((item) => item.status === "Late").length,
-    halfDay: statusFilteredRecords.filter((item) => item.status === "Half Day").length,
-    absent: statusFilteredRecords.filter((item) => item.status === "Absent").length,
-  }), [statusFilteredRecords]);
+  const summary = useMemo(() => {
+    const totalHoursMinutes = statusFilteredRecords.reduce((sum, item) => {
+      if (!item.total_hours) return sum;
+      const match = item.total_hours.match(/(\d+):(\d{2})/);
+      if (match) {
+        return sum + (parseInt(match[1], 10) * 60 + parseInt(match[2], 10));
+      }
+      return sum;
+    }, 0);
+
+    const totalHours = Math.floor(totalHoursMinutes / 60);
+    const totalMinutes = totalHoursMinutes % 60;
+
+    return {
+      total: statusFilteredRecords.length,
+      present: statusFilteredRecords.filter((item) => item.status === "Present").length,
+      late: statusFilteredRecords.filter((item) => item.status === "Late").length,
+      halfDay: statusFilteredRecords.filter((item) => item.status === "Half Day").length,
+      absent: statusFilteredRecords.filter((item) => item.status === "Absent").length,
+      totalHours: `${totalHours}:${totalMinutes.toString().padStart(2, "0")}`,
+    };
+  }, [statusFilteredRecords]);
 
   const handleStatusChange = (status) => {
     if (status === "All") {
@@ -147,6 +162,7 @@ export default function Attendance() {
             <div className="admin-stat-tile__label">Absent</div>
             <div className="admin-stat-tile__value">{summary.absent}</div>
           </div>
+          
         </div>
 
         <div className="admin-pill-row">
