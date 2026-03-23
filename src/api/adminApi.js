@@ -103,3 +103,31 @@ export async function getNetworks(params = {}) {
   const response = await apiRootClient.get("/users/networks", { params });
   return response.data;
 }
+
+export async function saveAdminNotification({ title, subject, message }) {
+  const response = await apiClient.post("http://103.185.75.124:5009/api/admin/save_admin_notification", { title, subject, message });
+  return response.data;
+}
+
+export async function getAdminNotifications() {
+  const response = await apiClient.get("http://103.185.75.124:5009/api/admin/get_admin_notifications");
+  return response.data;
+}
+
+export async function getAllPaySlips() {
+  const response = await apiClient.get("http://103.185.75.124:5009/api/admin/get_allPaySlips");
+  return response.data;
+}
+
+export async function updatePaySlipStatus({ id, request_status }) {
+  const body = createMultipartFormData({
+    id,
+    request_status,
+  });
+
+  const response = await apiClient.post("http://103.185.75.124:5009/api/admin/update_pay_slip_status", body, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return response.data;
+}

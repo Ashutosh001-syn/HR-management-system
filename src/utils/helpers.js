@@ -271,3 +271,15 @@ export function createMultipartFormData(payload = {}, extra = {}) {
   });
   return formData;
 }
+
+export function formatDateRange(fromDate, toDate) {
+  if (!fromDate || !toDate) return EMPTY_VALUE;
+  
+  try {
+    const from = formatDate(fromDate);
+    const to = formatDate(toDate);
+    return `${from} → ${to}`;
+  } catch {
+    return EMPTY_VALUE;
+  }
+}

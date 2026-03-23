@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-
-const STORAGE_KEY = "notice-board-records";
+import { useState, useEffect } from "react";
+import { saveAdminNotification, getAdminNotifications } from "@/api/adminApi";
 
 const INITIAL_FORM = {
   subject: "",
@@ -27,24 +26,31 @@ export default function NoticeBoard() {
   const [notices, setNotices] = useState([]);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const savedNotices = localStorage.getItem(STORAGE_KEY);
-      if (!savedNotices) return;
-
-      const parsedNotices = JSON.parse(savedNotices);
-      if (Array.isArray(parsedNotices)) {
-        setNotices(parsedNotices);
+    const fetchNotices = async () => {
+      try {
+        setLoading(true);
+        const response = await getAdminNotifications();
+        if (response.success) {
+          const mappedNotices = (response.data || []).map(notice => ({
+            ...notice,
+            createdAt: notice.created_at
+          }));
+          setNotices(mappedNotices);
+        } else {
+          setError(response.message || "Failed to fetch notices");
+        }
+      } catch (err) {
+        setError(err.message || "Failed to fetch notices");
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      setNotices([]);
-    }
-  }, []);
+    };
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notices));
-  }, [notices]);
+    fetchNotices();
+  }, []);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -55,7 +61,7 @@ export default function NoticeBoard() {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const nextFormData = {
@@ -70,16 +76,25 @@ export default function NoticeBoard() {
       return;
     }
 
-    const newNotice = {
-      id: Date.now(),
-      ...nextFormData,
-      createdAt: new Date().toISOString(),
-    };
-
-    setNotices((current) => [newNotice, ...current]);
-    setFormData(INITIAL_FORM);
-    setError("");
-    setSuccessMessage("Notice submitted successfully.");
+    try {
+      const response = await saveAdminNotification(nextFormData);
+      if (response.success) {
+        const newNotice = {
+          id: response.insertId,
+          ...nextFormData,
+          createdAt: new Date().toISOString(),
+        };
+        setNotices((current) => [newNotice, ...current]);
+        setFormData(INITIAL_FORM);
+        setError("");
+        setSuccessMessage(response.message || "Notification saved successfully.");
+      } else {
+        throw new Error(response.message || "Failed to save notification");
+      }
+    } catch (err) {
+      setError(err.message || "Failed to save notice. Please try again.");
+      setSuccessMessage("");
+    }
   };
 
   return (
@@ -167,7 +182,9 @@ export default function NoticeBoard() {
               <span className="admin-count-badge">{notices.length} Notices</span>
             </div>
 
-            {notices.length === 0 ? (
+            {loading ? (
+              <div className="admin-empty-state">Loading notices...</div>
+            ) : notices.length === 0 ? (
               <div className="admin-empty-state">No notices submitted yet.</div>
             ) : (
               <div className="d-flex flex-column gap-3">
