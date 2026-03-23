@@ -126,30 +126,30 @@ export default function EmployeeForm({
     setFormData((current) => ({ ...current, attachments: files }));
   };
 
-  const handlePhotoChange = (event) => {
-    const file = event.target.files?.[0] || null;
-    setFormData((current) => ({ ...current, photo: file }));
+  // const handlePhotoChange = (event) => {
+  //   const file = event.target.files?.[0] || null;
+  //   setFormData((current) => ({ ...current, photo: file }));
 
-    if (photoPreview?.startsWith("blob:")) {
-      URL.revokeObjectURL(photoPreview);
-    }
+  //   if (photoPreview?.startsWith("blob:")) {
+  //     URL.revokeObjectURL(photoPreview);
+  //   }
 
-    setPhotoPreview(file ? URL.createObjectURL(file) : employee?.raw?.photo || employee?.raw?.profileimage || "");
-  };
+  //   setPhotoPreview(file ? URL.createObjectURL(file) : employee?.raw?.photo || employee?.raw?.profileimage || "");
+  // };
 
-  const clearPhoto = () => {
-    setFormData((current) => ({ ...current, photo: null }));
+  // const clearPhoto = () => {
+  //   setFormData((current) => ({ ...current, photo: null }));
 
-    if (photoPreview?.startsWith("blob:")) {
-      URL.revokeObjectURL(photoPreview);
-    }
+  //   if (photoPreview?.startsWith("blob:")) {
+  //     URL.revokeObjectURL(photoPreview);
+  //   }
 
-    setPhotoPreview(employee?.raw?.photo || employee?.raw?.profileimage || "");
+  //   setPhotoPreview(employee?.raw?.photo || employee?.raw?.profileimage || "");
 
-    if (photoRef.current) {
-      photoRef.current.value = "";
-    }
-  };
+  //   if (photoRef.current) {
+  //     photoRef.current.value = "";
+  //   }
+  // };
 
   const resetForm = () => {
     setFormData(getInitialFormState(employee, isEdit));
@@ -187,6 +187,8 @@ export default function EmployeeForm({
     setSubmitting(true);
     setSubmitError("");
 
+    console.log("Attempting to create employee (isEdit:", isEdit, ") with formData:", formData);
+
     try {
       const { value: rawUserId, numericValue: numericUserId } = getUserIdentifierDetails(employee);
       const editTargetId = numericUserId || rawUserId;
@@ -207,7 +209,14 @@ export default function EmployeeForm({
         resetForm();
       }
     } catch (err) {
-      setSubmitError(err.message || "Failed to save employee.");
+      console.error("Employee create/edit failed:", {
+        isEdit,
+        formDataKeys: Object.keys(formData),
+        error: err,
+        status: err.status,
+        data: err.data
+      });
+      setSubmitError(err.message || "Failed to save employee. Check console for details.");
     } finally {
       setSubmitting(false);
     }

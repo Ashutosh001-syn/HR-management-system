@@ -128,11 +128,11 @@ export default function Attendance() {
 
         <div className="admin-stats-grid">
           <div className="admin-stat-tile">
-            <div className="admin-stat-tile__label">Total Records</div>
-            <div className="admin-stat-tile__value">{summary.total}</div>
+<div className="admin-stat-tile__label">Total Present</div>
+<div className="admin-stat-tile__value">{summary.present + summary.late + summary.halfDay}</div>
           </div>
           <div className="admin-stat-tile admin-stat-tile--green">
-            <div className="admin-stat-tile__label">Present</div>
+            <div className="admin-stat-tile__label">ON Time</div>
             <div className="admin-stat-tile__value">{summary.present}</div>
           </div>
           <div className="admin-stat-tile admin-stat-tile--amber">

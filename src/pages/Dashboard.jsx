@@ -213,9 +213,7 @@ function StatCard({
       </div>
 
       <div className="dashboard-stat-bottom">
-        <span className="dashboard-drag-hint">
-          <FiMove size={14} /> Drag to reorder
-        </span>
+
         <span>{note}</span>
         <button type="button" className="dashboard-inline-button" onClick={onView}>
           Explore <FiArrowRight size={15} />
@@ -254,9 +252,7 @@ function QuickAction({
         <div>
           <div className="dashboard-action-title">{title}</div>
           <div className="dashboard-action-description">{description}</div>
-          <div className="dashboard-action-drag">
-            <FiMove size={14} /> Drag to reorder
-          </div>
+
         </div>
         <FiArrowRight size={16} className="dashboard-action-arrow" />
       </button>
@@ -550,9 +546,7 @@ export default function Dashboard() {
           <span>{todayLabel}</span>
         </div>
 
-        <div className="dashboard-hero-drag">
-          <FiMove size={14} /> Drag to reorder and resize from the corner
-        </div>
+
 
         {error && (
           <div className="dashboard-error-wrap">
@@ -593,9 +587,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="dashboard-hero-drag dashboard-hero-drag--light">
-          <FiMove size={14} /> Drag to reorder and resize from the corner
-        </div>
+
       </ResizableShell>
     ),
   };

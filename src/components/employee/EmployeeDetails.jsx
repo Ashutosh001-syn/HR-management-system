@@ -91,7 +91,7 @@ export default function EmployeeDetails({ employee }) {
 
       <Section title="Account Details">
         <Field label="Password" value={raw.password} />
-        <Field label="Profile Type" value={raw.profile_type} />
+        {/* <Field label="Profile Type" value={raw.profile_type} /> */}
         <Field label="Profile Image" value={raw.profileimage} />
       </Section>
     </div>
