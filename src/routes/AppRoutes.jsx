@@ -13,6 +13,7 @@ const WifiSystem = lazy(() => import("@/pages/WifiSystem"));
 const NoticeBoard = lazy(() => import("@/pages/NoticeBoard"));
 const EmployeeFormPage = lazy(() => import("@/pages/EmployeeFormPage"));
 const PlaceholderPage = lazy(() => import("@/pages/PlaceholderPage"));
+const Payslip = lazy(() => import("@/pages/Payslip"));
 
 function ProtectedRoute({ children }) {
   const userid = localStorage.getItem("userid");
@@ -45,7 +46,7 @@ export default function AppRoutes() {
           <Route path="attendance" element={<Attendance />} />
           <Route path="wifi-system" element={<WifiSystem />} />
           <Route path="notice" element={<NoticeBoard />} />
-          <Route path="payslip" element={<PlaceholderPage title="Payslip" message="Payslip generator coming soon." />} />
+          <Route path="payslip" element={<Payslip />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
