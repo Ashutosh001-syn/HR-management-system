@@ -423,7 +423,7 @@ export default function Dashboard() {
       onView: () => navigate("/dashboard/employees"),
     },
     present: {
-      label: "Present Today",
+      label: "On Time Today",
       value: String(dashboardSummary.totalPresent),
       accentClass: "accent-green",
       icon: FiCheckCircle,

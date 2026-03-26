@@ -27,6 +27,7 @@ export default function Employees() {
   const [notification, setNotification] = useState({ show: false, message: "", type: "info" });
   const [confirmation, setConfirmation] = useState({ show: false, message: "", onConfirm: null });
 
+
   const filteredEmployees = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
     if (!query) return employees;
@@ -168,6 +169,12 @@ export default function Employees() {
                             </button>
                             <button className="btn btn-sm btn-warning" onClick={() => openEditEmployee(employee)}>
                               Edit
+                            </button>
+                            <button
+                              className="btn btn-sm btn-info"
+                              onClick={() => navigate(`/dashboard/reports/${employee.id}`)}
+                            >
+                              Report
                             </button>
                             <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteEmployee(employee)}>
                               Delete

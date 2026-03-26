@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Topbar from '@/components/common/Topbar';
+import ConfirmationModal from "@/components/common/ConfirmationModal";
 import Loader from "@/components/common/Loader";
 import Error from "@/components/common/Error";
+import NotificationModal from "@/components/common/NotificationModal";
 import { getAllPaySlips, updatePaySlipStatus } from '@/api/adminApi';
 
 const Payslip = () => {
@@ -18,6 +19,8 @@ const Payslip = () => {
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const [notification, setNotification] = useState({ show: false, message: "", type: "info" });
+  const [confirmation, setConfirmation] = useState({ show: false, message: "", onConfirm: null });
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -57,23 +60,46 @@ const Payslip = () => {
     }
   };
 
-  const handleStatusUpdate = async (id, status) => {
-    if (!confirm(`Are you sure you want to ${status} payslip request #${id}?`)) return;
+  const handleStatusUpdate = async (payslip, status) => {
+    setConfirmation({
+      show: true,
+      message: `Are you sure you want to ${status} payslip request ${payslip.user_id}?`,
+      onConfirm: async () => {
+        try {
+          setUpdatingId(payslip.id);
+          const response = await updatePaySlipStatus({
+            id: payslip.id,
+            user_id: payslip.user_id,
+            from_date: payslip.from_date?.split('T')[0] || payslip.from_date,
+            to_date: payslip.to_date?.split('T')[0] || payslip.to_date,
+            request_status: status
+          });
 
-    try {
-      setUpdatingId(id);
-      const response = await updatePaySlipStatus({ id, request_status: status });
-      if (response.success) {
-        // No alert needed - table refreshes instantly
-        fetchPayslips(); // Refetch updated list
-      } else {
-        alert('Update failed: ' + (response.message || 'Unknown error'));
-      }
-    } catch (err) {
-      alert('Error: ' + (err.message || 'Update failed'));
-    } finally {
-      setUpdatingId(null);
-    }
+          if (response.success) {
+            await fetchPayslips();
+            setNotification({
+              show: true,
+              message: `Payslip request ${status} successfully.`,
+              type: "success",
+            });
+          } else {
+            setNotification({
+              show: true,
+              message: response.message || "Update failed.",
+              type: "error",
+            });
+          }
+        } catch (err) {
+          setNotification({
+            show: true,
+            message: err.message || "Update failed.",
+            type: "error",
+          });
+        } finally {
+          setUpdatingId(null);
+        }
+      },
+    });
   };
 
   useEffect(() => {
@@ -104,7 +130,8 @@ const Payslip = () => {
   };
 
   return (
-    <div className="admin-page">
+    <>
+      <div className="admin-page">
       <section className="admin-page__hero">
         <div>
           <div className="admin-page__eyebrow">Payslip Management</div>
@@ -183,9 +210,7 @@ const Payslip = () => {
         {error && <Error message={error} />}
 
         {loading && <Loader label="Loading payslip requests..." />}
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
+
         {!loading && !error && filteredPayslips.length === 0 && (
           <div className="admin-empty-state">
             No payslip requests match the current filters/search.
@@ -194,102 +219,111 @@ const Payslip = () => {
 
         {!loading && !error && filteredPayslips.length > 0 && (
           <>
-          <div className="table-responsive">
-            <table className="table admin-table align-middle mb-0">
-              <thead>
-                <tr>
-                  <th style={{width: 80}}>#</th>
-                  <th>User ID</th>
-                  <th>Period</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th style={{width: 160}}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPayslips.map((payslip, index) => (
-                  <tr key={payslip.id}>
-                    <td>{index + 1}</td>
-                    <td>{payslip.user_id}</td>
-                    <td>{formatDate(payslip.from_date)} - {formatDate(payslip.to_date)}</td>
-                    <td>
-                      <span className={`badge ${
-                        payslip.request_status === 'pending' ? 'bg-warning text-dark' :
-                        payslip.request_status === 'approved' ? 'bg-success' :
-                        'bg-danger'
-                      }`}>
-                        {payslip.request_status?.toUpperCase() || 'UNKNOWN'}
-                      </span>
-                    </td>
-                    <td>{formatDate(payslip.created_at)}</td>
-                    <td>
-                      {payslip.request_status === 'pending' ? (
-                        <>
-                          <button
-                            className="btn btn-sm btn-success me-1"
-                            onClick={() => handleStatusUpdate(payslip.id, 'approved')}
-                            disabled={updatingId === payslip.id}
-                          >
-                            {updatingId === payslip.id ? 'Updating...' : 'Approve'}
-                          </button>
-                          <button
-                            className="btn btn-sm btn-danger"
-                            onClick={() => handleStatusUpdate(payslip.id, 'rejected')}
-                            disabled={updatingId === payslip.id}
-                          >
-                            {updatingId === payslip.id ? 'Updating...' : 'Reject'}
-                          </button>
-                        </>
-                      ) : (
-                        <span className="text-muted">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+  <div className="table-responsive">
+    <table className="table admin-table align-middle mb-0">
+      <thead>
+        <tr>
+          <th style={{ width: 80 }}>#</th>
+          <th>User ID</th>
+          <th>Period</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th style={{ width: 160 }}>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {filteredPayslips.map((payslip, index) => (
+          <tr key={payslip.id}>
+            <td>{index + 1}</td>
+            <td>{payslip.user_id}</td>
 
-            {/* Mobile cards fallback if needed */}
-            <div className="grid gap-4 md:hidden">
-              {filteredPayslips.map((payslip, index) => (
-                <div key={payslip.id} className="bg-white shadow rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between"><span>ID #{index + 1}</span></div>
-                  <div>User: {payslip.user_id}</div>
-                  <div>Period: {formatDate(payslip.from_date)} - {formatDate(payslip.to_date)}</div>
-                  <div>Status: <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                    payslip.request_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    payslip.request_status === 'approved' ? 'bg-green-100 text-green-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {payslip.request_status?.toUpperCase()}
-                  </span></div>
-                  <div>Created: {formatDate(payslip.created_at)}</div>
-                  {payslip.request_status === 'pending' && (
-                    <div className="flex gap-2">
-                      <button className="flex-1 bg-green-500 text-white py-1 px-2 text-sm rounded" onClick={() => handleStatusUpdate(payslip.id, 'approved')}>
-                        Approve
-                      </button>
-                      <button className="flex-1 bg-red-500 text-white py-1 px-2 text-sm rounded" onClick={() => handleStatusUpdate(payslip.id, 'rejected')}>
-                        Reject
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            <td>
+              {formatDate(payslip.from_date)} -{" "}
+              {formatDate(payslip.to_date)}
+            </td>
 
-            {count > 0 && (
-              <div className="text-sm text-gray-500 text-center mt-4">
-                Showing {filteredPayslips.length} of {count} payslip requests
-              </div>
-            )}
-          </>)} 
+            <td>
+              <span
+                className={`badge ${
+                  payslip.request_status === "pending"
+                    ? "bg-warning text-dark"
+                    : payslip.request_status === "approved"
+                    ? "bg-success"
+                    : "bg-danger"
+                }`}
+              >
+                {payslip.request_status?.toUpperCase() || "UNKNOWN"}
+              </span>
+            </td>
 
-        
+            <td>{formatDate(payslip.created_at)}</td>
+
+            <td>
+              <button
+                className={`btn btn-sm btn-success me-1 ${
+                  payslip.request_status !== "pending"
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+                onClick={() =>
+                  handleStatusUpdate(payslip, "approved")
+                }
+                disabled={
+                  updatingId === payslip.id ||
+                  payslip.request_status !== "pending"
+                }
+              >
+                {updatingId === payslip.id
+                  ? "Updating..."
+                  : "Approve"}
+              </button>
+
+              <button
+                className={`btn btn-sm btn-danger ${
+                  payslip.request_status !== "pending"
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+                onClick={() =>
+                  handleStatusUpdate(payslip, "rejected")
+                }
+                disabled={
+                  updatingId === payslip.id ||
+                  payslip.request_status !== "pending"
+                }
+              >
+                {updatingId === payslip.id
+                  ? "Updating..."
+                  : "Reject"}
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+
+ 
+</>
+          )}
         </div>
       </div>
-    // </div>
+
+      <NotificationModal
+        show={notification.show}
+        onClose={() => setNotification((current) => ({ ...current, show: false }))}
+        message={notification.message}
+        type={notification.type}
+      />
+
+      <ConfirmationModal
+        show={confirmation.show}
+        onClose={() => setConfirmation((current) => ({ ...current, show: false }))}
+        onConfirm={confirmation.onConfirm}
+        message={confirmation.message}
+      />
+    </>
   );
 };
 

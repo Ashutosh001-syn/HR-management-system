@@ -119,13 +119,16 @@ export async function getAllPaySlips() {
   return response.data;
 }
 
-export async function updatePaySlipStatus({ id, request_status }) {
+export async function updatePaySlipStatus({ id, user_id, from_date, to_date, request_status }) {
   const body = createMultipartFormData({
     id,
+    user_id,
+    from_date,
+    to_date,
     request_status,
   });
 
-  const response = await apiClient.post("http://103.185.75.124:5009/api/admin/update_pay_slip_status", body, {
+  const response = await apiClient.post("http://103.185.75.124:5009/api/admin/update_paySlip", body, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 

@@ -7,6 +7,14 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 const STATUS_OPTIONS = ["All", "Present", "Late", "Half Day", "Absent"];
 
+const STATUS_LABELS = {
+  "All": "All",
+  "Present": "On Time",
+  "Late": "Late",
+  "Half Day": "Half Day",
+  "Absent": "Absent"
+};
+
 function getStatusBadgeClass(status) {
   if (status === "Present") return "bg-success";
   if (status === "Late") return "bg-warning text-dark";
@@ -147,7 +155,7 @@ export default function Attendance() {
 <div className="admin-stat-tile__value">{summary.present + summary.late + summary.halfDay}</div>
           </div>
           <div className="admin-stat-tile admin-stat-tile--green">
-            <div className="admin-stat-tile__label">ON Time</div>
+            <div className="admin-stat-tile__label">On Time</div>
             <div className="admin-stat-tile__value">{summary.present}</div>
           </div>
           <div className="admin-stat-tile admin-stat-tile--amber">
@@ -168,7 +176,7 @@ export default function Attendance() {
         <div className="admin-pill-row">
           {STATUS_OPTIONS.map((status) => (
             <button
-              key={status}
+              key={STATUS_LABELS[status]}
               type="button"
               className={`btn ${selectedStatus === status ? "btn-success" : "btn-outline-success"}`}
               onClick={() => handleStatusChange(status)}

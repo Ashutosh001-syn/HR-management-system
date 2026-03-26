@@ -4,6 +4,7 @@ import "./Sidebar.css";
 import { SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_WIDTH } from "@/utils/helpers";
 import {
   FiActivity,
+  FiBarChart2,
   FiBell,
   FiCalendar,
   FiFileText,
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { key: "wifi-system", label: "Wifi System", to: "/dashboard/wifi-system", icon: FiWifi },
   { key: "notice", label: "Notice", to: "/dashboard/notice", icon: FiBell },
   { key: "payslip", label: "Payslip", to: "/dashboard/payslip", icon: FiFileText },
+  // { key: "reports", label: "Reports", to: "/dashboard/reports", icon: FiBarChart2 },
 ];
 
 function isActivePath(pathname, item) {
